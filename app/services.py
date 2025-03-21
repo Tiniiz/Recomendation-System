@@ -181,10 +181,18 @@ def get_personal_recommendation(user: int) -> List[m.Recipe]:
     # Рекомендация рецептов
     predicted_recipes = pcg.recommend_recipes(user)
 
+    print("Predicted Recipes:", predicted_recipes)
+    print("Types:", [type(recipe) for recipe in predicted_recipes])
+
+    # Step 3: Query the database
     Session = sessionmaker(bind=engine)
     session = Session()
 
     recipes = session.query(t.RecipesData).filter(t.RecipesData.id.in_(predicted_recipes)).all()
+
+    # Step 4: Process the results
+    for recipe in recipes:
+        print(recipe.title, recipe.category)
 
     return [m.Recipe(name=recipe.title,
         category=recipe.category,

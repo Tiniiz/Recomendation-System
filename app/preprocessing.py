@@ -178,34 +178,39 @@ def predict_recipes(ingredient_list, top_n=5):
 
 
 def recommend_recipes(user_id, n=5):
-
     try:
-        # Загрузка данных при запуске приложения
-        with open("ratings_data.pkl", "rb") as f:
+        # Загрузка данных
+        with open("C:/Users/ivalu/vscodeProjects/recsysfront/ratings_data.pkl", "rb") as f:
             data = pickle.load(f)
             ratings_df = data["ratings_df"]
             user_ids = data["user_ids"]
             recipe_ids = data["recipe_ids"]
             sparse_matrix = data["sparse_matrix"].tocsr()  # Преобразуем в CSR для эффективности
     except FileNotFoundError:
-        raise ValueError(f"Файл с данными для пользователя {user_id} не найден")
-    except json.JSONDecodeError:
-        raise ValueError(f"Файл с данными для пользователя {user_id} поврежден")
-
+        raise ValueError("Файл с данными не найден")
+    except (pickle.PickleError, EOFError) as e:
+        raise ValueError(f"Файл с данными поврежден: {str(e)}")
     # Загрузка модели
     model = AlternatingLeastSquares()
     model = model.load("als_model.npz")
 
-    if user_id not in ratings_df["user_id"].values:
+    # Проверяем, существует ли пользователь
+    if user_id not in user_ids.tolist():
         # Если пользователя нет, возвращаем популярные рецепты
         popular_recipes = ratings_df["recipe_id"].value_counts().index.tolist()
         return popular_recipes[:n]
-    
+
     # Получаем код пользователя
-    user_code = ratings_df["user_id"].astype("category").cat.categories.get_loc(user_id)
+    user_code = user_ids.get_loc(user_id)
     
     # Получаем рекомендации
     recommended = model.recommend(user_code, sparse_matrix[user_code], N=n)
-    recommended_recipe_ids = [ratings_df["recipe_id"].iloc[int(rec[0])] for rec in recommended]
-    
+
+    # Логируем recommended для отладки
+    print("Recommended indices:", [rec[0] for rec in recommended])
+    print("Type of recommended indices:", [type(rec[0]) for rec in recommended])
+
+    # Преобразуем индексы в целые числа и получаем ID рецептов
+    recommended_recipe_ids = [int(recipe_ids[int(rec[0])]) for rec in recommended]  # Convert to native int
+
     return recommended_recipe_ids

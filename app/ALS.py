@@ -13,10 +13,7 @@ engine = create_engine(Config.DATABASE_URI, echo=False)
 # Загружаем данные
 ratings_df = pd.read_sql("SELECT user_id, recipe_id, rating FROM user_ratings", engine)
 
-# Разделяем данные на train и test (80% - train, 20% - test)
-# train_df, test_df = train_test_split(ratings_df, test_size=0.2, random_state=42, stratify=ratings_df['user_id'])
-
-# Создаем разреженную матрицу для train
+# Создаем разреженную матрицу
 user_ids = ratings_df["user_id"].astype("category").cat.codes
 recipe_ids = ratings_df["recipe_id"].astype("category").cat.codes
 ratings = ratings_df["rating"].astype(float)
@@ -27,9 +24,9 @@ sparse_matrix = coo_matrix((ratings, (user_ids, recipe_ids)))
 with open("ratings_data.pkl", "wb") as f:
     pickle.dump({
         "ratings_df": ratings_df,
-        "user_ids": ratings_df["user_id"].astype("category").cat.codes,
-        "recipe_ids": ratings_df["recipe_id"].astype("category").cat.codes,
-        "sparse_matrix": coo_matrix((ratings_df["rating"], (user_ids, recipe_ids)))
+        "user_ids": ratings_df["user_id"].astype("category").cat.categories,
+        "recipe_ids": ratings_df["recipe_id"].astype("category").cat.categories,
+        "sparse_matrix": sparse_matrix  # Используем существующую sparse_matrix
     }, f)
 
 # Обучаем ALS

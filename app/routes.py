@@ -60,6 +60,7 @@ def get_recommendations(user_id: int = Query(..., description="ID пользов
     try:
         # Логируем входные данные
         print(f"Запрос для user_id: {user_id}")
+        print(f'Тип данных: {type(user_id)}')
         
         # Получаем рекомендации
         recommended_recipes = serv.get_personal_recommendation(user_id)
@@ -68,3 +69,14 @@ def get_recommendations(user_id: int = Query(..., description="ID пользов
         # Логируем ошибку
         print(f"Ошибка при получении рекомендаций: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Ошибка при получении рекомендаций: {str(e)}")
+
+
+# @router.post("/api/recommendations")
+# def get_recommendations(request: m.UserRequest):
+#     print(f"Получен запрос: {request}")
+
+#     if not request.ingredients:
+#         raise HTTPException(status_code=400, detail="Список ингредиентов не может быть пустым")
+
+#     matching_recipes = serv.get_personal_recommendation(request.id)
+#     return matching_recipes
